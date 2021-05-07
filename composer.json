@@ -1,0 +1,28 @@
+{
+    "name": "navolykin/prototype",
+    "type": "test-framework",
+    "description": "this is a training framework, on which I train my skills and self-actualize",
+    "keywords": [
+        "request"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Navolykin Vladimir",
+            "email": "cp.navolykin@gmail.com",
+            "homepage": "https://github.com/navolykin"
+        }
+    ],
+    "minimum-stability": "dev",
+    "autoload": {
+        "psr-4": {
+            "Services\\": "Services"
+        }
+    },
+    "require": {
+        "php": ">=7.2.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*"
+    }
+}
