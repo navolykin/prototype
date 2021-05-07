@@ -1,56 +1,83 @@
-<?php declare(strict_types=1);
+<?php
 
+declare(strict_types=1);
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * /
+ *  ___                   _        _                 ___   *
+ * |  _|                 | |      | |               |_  |  *
+ * | |    _ __  _ __ ___ | |_ ___ | |_ _   _ _ __     | |  *
+ * | |   | '_ \| '__/ _ \| __/ _ \| __| | | | '_ \    | |  *
+ * | |   | |_) | | | (_) | || (_) | |_| |_| | |_) |   | |  *
+ * | |_  | .__/|_|  \___/ \__\___/ \__|\__, | .__/   _| |  *
+ * |___| | |                            __/ | |     |___|  *
+ *       |_|                           |___/|_|            *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 namespace Services\Http;
 
+use Services\Http\Message;
 use Exception;
 
-class Request
+class Request extends Message
 {
-    //https://tools.ietf.org/html/rfc7231#section-4.3.1
+    /**
+     * @link https://tools.ietf.org/html/rfc7231#section-4.3.1
+     */
     const GET       = 'GET';
 
-    //https://tools.ietf.org/html/rfc7231#section-4.3.2
+    /**
+     * @link https://tools.ietf.org/html/rfc7231#section-4.3.2
+     */
     const HEAD      = 'HEAD';
 
-    //https://tools.ietf.org/html/rfc7231#section-4.3.3
+    /**
+     * @link https://tools.ietf.org/html/rfc7231#section-4.3.3
+     */
     const POST      = 'POST';
 
-    //https://tools.ietf.org/html/rfc7231#section-4.3.4
+    /**
+     * @link https://tools.ietf.org/html/rfc7231#section-4.3.4
+     */
     const PUT       = 'PUT';
 
-    //https://tools.ietf.org/html/rfc7231#section-4.3.5
+    /**
+     * @link https://tools.ietf.org/html/rfc7231#section-4.3.5
+     */
     const DELETE    = 'DELETE';
 
-    //https://tools.ietf.org/html/rfc7231#section-4.3.6
+    /**
+     * @link https://tools.ietf.org/html/rfc7231#section-4.3.6
+     */
     const CONNECT   = 'CONNECT';
 
-    //https://tools.ietf.org/html/rfc7231#section-4.3.7
+    /**
+     * @link https://tools.ietf.org/html/rfc7231#section-4.3.7
+     */
     const OPTIONS   = 'OPTIONS';
 
-    //https://tools.ietf.org/html/rfc7231#section-4.3.8
+    /**
+     * @link https://tools.ietf.org/html/rfc7231#section-4.3.8
+     */
     const TRACE     = 'TRACE';
 
-    //https://tools.ietf.org/html/rfc5789#section-2
+    /**
+     * @link https://tools.ietf.org/html/rfc5789#section-2
+     */
     const PATCH     = 'PATCH';
 
-    const DEFAULT_PROTOCOL = 'HTTP/1.1';
-
-    const HEADER_VALUE_SEPARATOR = ',';
-
     protected $standart_methods = [
-        self::GET, self::HEAD, self::POST, self::PUT, self::DELETE, self::CONNECT, self::OPTIONS, self::TRACE, self::PATCH
+        self::GET,
+        self::HEAD,
+        self::POST,
+        self::PUT,
+        self::DELETE,
+        self::CONNECT,
+        self::OPTIONS,
+        self::TRACE,
+        self::PATCH
     ];
 
     protected string $method;
-
-    protected string $protocol;
-
-    protected array  $headers          = [];
-
-    protected array  $headers_names    = [];
-
-    protected array  $cookies          = [];
 
     protected string $ip               = '';
 
@@ -68,15 +95,6 @@ class Request
             $this->headers_names[] = $header_name;
         }
 
-        /*$cookie_header = $this->getHeaderLine('cookie');
-        die($cookie_header);
-        if ($cookie_header) {
-            $cookies = explode(', ', $cookie_header);
-            foreach ($cookies as $cookie) {
-                list($key, $value) = explode('=', $cookie);
-                $this->cookies[$key] = $value;
-            }
-        }*/
     }
 
     public static function fromGlobals(): self
@@ -86,7 +104,7 @@ class Request
             $method = \strtoupper($_SERVER['REQUEST_METHOD']);
         }
 
-        $protocol = self::DEFAULT_PROTOCOL;
+        $protocol = self::HTTP_1_1;
         if (!empty($_SERVER['SERVER_PROTOCOL'])) {
             $protocol = $_SERVER['SERVER_PROTOCOL'];
         }
@@ -102,7 +120,7 @@ class Request
         foreach ($_SERVER as $key => $value) {
             if (strpos($key, 'HTTP_') === 0) {
                 $header_name = str_replace(['HTTP_', '_'], ['', '-'], $key);
-                $headers[$header_name] = explode(self::HEADER_VALUE_SEPARATOR, $value);
+                $headers[$header_name] = explode(',', $value);
             }
         }
 
@@ -152,60 +170,7 @@ class Request
         return $this->ip;
     }
 
-    //protocol
-    public function getProtocol(): string
-    {
-        return $this->protocol;
-    }
-
-    public function getProtocolVersion():string
-    {
-        return str_replace('HTTP/', '', $this->protocol);
-    }
-
-    public function protocol(): string
-    {
-        return $this->protocol;
-    }
-
-    //headers
-    private static function _normolizeHeaderName($name)
-    {
-        if (!is_string($name)) {
-            throw new Exception("The title name must be a string, and the received " . gettype($name));
-        }
-
-        return strtoupper(str_replace(' ', '-', trim($name)));
-    }
-
-    public function getHeaders(): array
-    {
-        return $this->headers;
-    }
-
-    public function hasHeader($name): bool
-    {
-        return in_array(self::_normolizeHeaderName($name), $this->headers_names);
-    }
-
-    public function getHeader($name): array
-    {
-        $name = self::_normolizeHeaderName($name);
-        if (isset($this->headers[$name])) {
-            return $this->headers[$name];
-        }
-        return [];
-    }
-
-    public function getHeaderLine($name): string
-    {
-        $name = self::_normolizeHeaderName($name);
-        if (isset($this->headers[$name])) {
-            return implode(',', $this->headers[$name]);
-        }
-        return '';
-    }
-
+    // headers
     public function getHost(): string
     {
         return $this->getHeaderLine('host');
@@ -238,16 +203,6 @@ class Request
         }
         return false;
     } 
-
-    //cookies
-    /*public function getCookies(): array
-    {
-        return $this->cookies;
-    }*/
-
-
-
-
 
 
     /**
